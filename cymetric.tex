@@ -1,0 +1,144 @@
+\documentclass{anstrans}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Cymetric: Fuel Cycle Metrics using \cyclus}
+\author{Anthony Scopatz, Arrielle Opotowsky, Paul P.H. Wilson$^{*}$}
+
+\institute{
+$^{*}$Department of Engineering Physics, University of Wisconsin - Madison, 
+1500 Engineering Drive, Madison WI 53703
+}
+
+\email{scopatz@gmail.edu \and opotowsky@wisc.edu}
+
+%%%% packages and definitions (optional)
+\usepackage{graphicx} % allows inclusion of graphics
+\usepackage{booktabs} % nice rules (thick lines) for tables
+\usepackage{microtype} % improves typography for PDF
+\usepackage{xspace}
+
+\newcommand{\SN}{S$_N$}
+\renewcommand{\vec}[1]{\bm{#1}} %vector is bold italic
+\newcommand{\vd}{\bm{\cdot}} % slightly bold vector dot
+\newcommand{\grad}{\vec{\nabla}} % gradient
+\newcommand{\ud}{\mathop{}\!\mathrm{d}} % upright derivative symbol
+\newcommand{\cyclus}{\textsc{Cyclus}\xspace}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Methods and Implementation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results and Analysis}
+The results were interesting, so interesting in fact that we have decided to
+present them here.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Subsection Goes Here}
+The user must manually capitalize initial letters of a subsection heading.
+
+For those who like equations in their papers, \LaTeX\ is a good choice. Here is
+an equation for the Marshak diffusion boundary condition:
+\begin{equation} \label{eq:marshak}
+  4 J^- = \phi + 2 D \vec{n} \vd \grad \phi \,.
+\end{equation}
+If we so choose, we can effortlessly reference the equation later.
+
+Another paragraph starts with Eq.~\eqref{eq:marshak} and sets $J^-$ to zero, a
+vacuum boundary condition:
+\begin{equation*}
+  0 = \phi + \frac{2}{3} \frac{1}{\sigma} \vec{n} \vd \grad \phi \,.
+\end{equation*}
+The extrapolation distance is $2/3$. A more detailed asymptotic analysis yields
+an extrapolation distance of about $0.71045$.
+
+Figure~\ref{fig:voltage} shows how a plot might conceivably look in your
+document. Always place figures after they are referenced so as not to throw
+off the reader. You can use symbols and different line styles to help
+differentiate your results, especially if they are printed in black and white.
+Note how Fig.~\ref{fig:voltage} uses dashed lines \verb|--| for the exact
+solution, solid lines \verb|-| for the new method's solutions, and dotted lines
+\verb|:| for existing inaccurate methods.
+\begin{figure}[ht] % replace 't' with 'b' to force it to be on the bottom
+  \centering
+  \includegraphics{example_figure.pdf}
+  \caption{Captions are flush with the left.}
+  \label{fig:voltage}
+\end{figure}
+
+Later on, we can include a table, even one that spans two columns such as
+Table~\ref{tab:widetable}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table*}[htb]
+  \centering
+\begin{tabular}{llllllllll}\toprule
+      & $\phi_T(0)$      & $\phi_T(10)$      & $\phi_T(20)$      &
+      $\phi_D(0)$      & $\phi_D(10)$      & $\phi_D(20)$      & $\rho$      &
+      $\varepsilon$      & $N_\text{it}$
+\\ \midrule
+$c=0.999$  & 0.9038 & 20.63 & 31.24 & 0.9087 & 20.63 & 31.23 & 0.2192 & $10^{-7}$ & 15
+\\
+$c=0.990$  & 0.3675 & 13.04 & 24.7 & 0.3696 & 13.04 & 24.69 & 0.2184 & $10^{-7}$ & 15
+\\
+$c=0.900$  & 0.009909 & 4.776 & 17.64 & 0.009984 & 4.786 & 17.63 & 0.2118 & $10^{-7}$ & 14
+\\
+$c=0.500$  & $6.069\times 10^{-5}$ & 2.212 & 15.53 & 6.213$\times 10^{-5}$ & 2.239 & 15.53 & 0.2068 & $10^{-7}$ & 13
+\\
+\bottomrule
+\end{tabular}
+  \caption{This is an example of a really wide table which might not normally
+  fit in the document.}
+  \label{tab:widetable}
+\end{table*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Notice how the table reference uses a Roman numeral
+for its numbering scheme, whereas the figure reference uses an Arabic numeral.
+For one-column tables, use the \verb|table| environment; two-column tables use
+\verb|table*|. The same applies to figures.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Another Subsection}
+Excessive sectioning in a three-page document is discouraged, but here are more
+subsections to demonstrate compliance with the ANS formatting guidelines.
+
+\subsubsection{Third-level Heading}
+This subsubsection shows compliance with the ANS-specified standard. This level
+of heading should be used rarely.
+
+\subsubsection{Another Such Heading}
+And, if you really think you need a third-level heading, you should make sure
+that your subsection needs at least two of them.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusions}
+
+The included ANS style file and this clear example file are a panacea for
+the hours of headache that invariably results from formatting a document in
+Microsoft Word.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\section{Appendix}
+
+Numbering in the appendix is different:
+\begin{equation} \label{eq:appendix}
+  2 + 2 = 5\,.
+\end{equation}
+and another equation:
+\begin{equation} \label{eq:appendix2}
+  a + b = c\,.
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Acknowledgments}
+This material is based upon work supported a Department of Energy Nuclear
+Energy University Programs Graduate Fellowship.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{ans}
+\bibliography{cymetric}
+\end{document}
+
