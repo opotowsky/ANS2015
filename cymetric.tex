@@ -3,7 +3,7 @@
 \include{acros}
 \makeglossaries
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{Cymetric: Fuel Cycle Metrics using \cyclus}
+\title{Cymetric - A Fuel Cycle Metrics Tool for \cyclus}
 \author{Anthony Scopatz, Arrielle Opotowsky, Paul P. H. Wilson$^{*}$}
 
 \institute{
@@ -11,7 +11,7 @@ $^{*}$Department of Engineering Physics, University of Wisconsin - Madison,
 1500 Engineering Drive, Madison WI 53703
 }
 
-\email{scopatz@gmail.edu \and opotowsky@wisc.edu}
+\email{scopatz@wisc.edu \and opotowsky@wisc.edu}
 
 %%%% packages and definitions
 \usepackage{graphicx} % allows inclusion of graphics
@@ -59,13 +59,37 @@ $^{*}$Department of Engineering Physics, University of Wisconsin - Madison,
 \begin{document}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-Nuclear fuel cycle performance is being given more attention as energy experts are attempting to identify a path forward for \gls{US} nuclear power. Thus, fuel cycle simulators are of interest; they can provide rapid feedback on an array of nuclear fuel cycles. This is generally done by computing metrics from the simulation results. Metrics of interest to the \gls{US} \gls{DOE}, for example, include levelized cost of electricity, proliferation resistance, and various quantities and qualities of the \gls{SNF}.
+Nuclear fuel cycle performance is being given more attention as energy 
+experts are attempting to identify a path forward for \gls{US} nuclear power. 
+Fuel cycle simulators are of thus of interest because they can provide rapid 
+feedback on an array of nuclear fuel cycles. This is generally done by 
+computing higher-level aggregate metrics derived from the simulation results. 
+Metrics of potential interest to the simulator stakeholders, for example, 
+include levelized cost of electricity, proliferation resistance, and various 
+quantities and qualities of the \gls{SNF}.
 
-The \cyclus nuclear fuel cycle simulator is a unique approach to the suite of existing codes. It includes many benefits and capabilities, including a modular architecture for flexible simulations and extensive comparisons, as well as an agent-based modeling approach to improve upon traditional system dynamics. \TODO{hrm, not sure what to cite, and not sure if I should add more than a blurb like this}
+The \cyclus nuclear fuel cycle simulator is a unique approach to the suite of 
+existing simulation codes. It includes many benefits and capabilities, 
+including a modular architecture for flexible simulations and extensive 
+comparisons, as well as an agent-based modeling approach to improve upon 
+traditional system dynamics. 
+\TODO{hrm, not sure what to cite, and not sure if I should add more than a blurb like this}
 
-Because a simulation is typically evaluated and compared via metrics, an analysis tool was written for \cyclus : Cymetric. When a \cyclus simulation is complete, it outputs a database. Cymetric reads in data from this \cyclus -generated database, then computes and writes the calculated metrics back to the database to allow for retrieval. The metrics can be dependent on a column in a table in a \cyclus database or on another metric.
+Simulations are typically evaluated and compared via metrics. This 
+prompted the creation of a
+a new analysis tool, called Cymetric, written for \cyclus. When a \cyclus 
+simulation is complete, it stores its information in a database. Cymetric 
+reads in data from this \cyclus{}-generated database, computes, and writes 
+the calculated metrics back to the database to allow for future retrieval. 
+The metrics can be dependent on other metrics in the \cyclus database.
+This allows sets of related metrics to be computed efficiently.
 
-Cymetric was designed with usability and extensibility in mind; it has a Python interface and enables user customizations and input. Cymetric's simple implementation  features a command line utility, \code{cymetric}, as well as Python functionality. It is also designed so that a user can easily add their own metrics of interest if they are not already included in the tool. 
+Cymetric was designed with usability and extensibility in mind. 
+It has a Python interface and enables user customizations and input. 
+Cymetric currently features a command line utility, \code{cymetric}, 
+as well as a Python interface. Furthermore, it is designed so that a user can 
+easily add their own custom metrics of interest if they are not already 
+included in the tool. 
 
 \TODO{more in intro}
 
@@ -73,7 +97,16 @@ Cymetric was designed with usability and extensibility in mind; it has a Python 
 \section{Design}
 \TODO{ read in from db, write to db, define root tables}
 
-Cymetric is designed to allow for metrics to be dependent on other metrics. For example, one might be interested in the decay heat of a batch of \gls{SNF}. The decay heat is calculated using the activity of individual nuclides. The activity is calculated from the mass of each nuclide, which is calculated from two root tables in the \cyclus database: quantity of material (mass) and the mass fraction of each nuclide in that material set. If the activity was previously calculated for another purpose, it is stored in the database and the additional step of determining the decay heat will be less expensive. 
+Cymetric is designed to allow for metrics to be dependent on other 
+metrics. These metric dependencies must form a directed acyclic graph (DAG).
+For example, one might be interested in the decay heat of a batch of 
+\gls{SNF}. The decay heat is calculated using the activity of individual 
+nuclides. The activity is calculated from the mass of each nuclide, which 
+is calculated from two root metics generated by  \cyclus itself: quantity of 
+material (mass) and the mass fraction of each nuclide in that material. 
+In this example, if the activity was previously calculated for another 
+purpose, it is stored in the database and the additional step of 
+determining the decay heat will be less expensive. 
 
 \TODO{I could make a figure to describe this if you think I should}
 
@@ -81,11 +114,22 @@ Cymetric is designed to allow for metrics to be dependent on other metrics. For 
 \section{Implementation}
 
 \subsection{Cymetric via the Command Line}
-The simplest way to become familiarized with the functionality of Cymetric is through the command line utility, accessed via \code{cymetric}. 
+The simplest way to become familiarized with the functionality of Cymetric 
+is through the command line utility \code{cymetric}. 
 
-The first argument given is the database of interest. Currently, \cyclus supports \gls{HDF5} and \gls{SQLite} databases, so Cymetric supports both as well. For the purposes of this paper, \code{test.sqlite} will be used as the cyclus output. The second argument given is a flag: either \code{-l} to obtain a listing of the tables in the database or \code{-e} to execute arbitrary code on a root table or a metric. 
+The first argument given to this tool is the database of interest. 
+Currently, \cyclus supports \gls{HDF5} and \gls{SQLite} databases, 
+so Cymetric supports both as well. For the purposes of this paper, 
+\code{test.sqlite} will be used as the cyclus output file. The second 
+argument given is an optional flag. Either \code{-l} may be provided to obtain 
+a listing of the tables currently in the database or the \code{-e} flag 
+can be given to execute arbitrary code on a metric. 
 
-A table listing using \code{-l} will print the \cyclus interface tables as well as the metadata \cyclus stores, as shown in Listing \ref{dashl}. After a metric is computed, it shows up on the table listing as well. 
+A table listing using \code{-l} will print the \cyclus generated tables 
+as well as the metadata \cyclus stores. This can be seen in Listing 
+\ref{dashl}. After a metric is computed, it shows up on the table 
+listing here as well. 
+
 \begin{lstlisting}[caption ={List of Tables in a Database}, label=dashl]
 $ cymetric test.sqlite -l
 AgentEntry
@@ -94,8 +138,6 @@ AgentStateInventories
 AgentState_agents_NullInstInfo
 AgentState_agents_NullRegionInfo
 AgentState_cycamore_BatchReactorCommodPrefs
-AgentState_cycamore_BatchReactorCommodityRecipeContext_inoutmap
-AgentState_cycamore_BatchReactorCommodityRecipeContext_resmap
 AgentState_cycamore_BatchReactorInfo
 AgentState_cycamore_BatchReactorInitialInv
 AgentState_cycamore_BatchReactorRecipeChanges
@@ -125,14 +167,22 @@ VectorDbl
 VectorInt
 VectorStr
 XMLPPInfo
+...
 \end{lstlisting}
 
-The code execution using \code{-e} is accomplished by including Python code in quotes after the flag, as shown in Listing \ref{dashe}. 
+The code execution using \code{-e} is accomplished by including 
+Python code in quotes after the flag, as shown in Listing \ref{dashe}. 
+
 \begin{lstlisting}[caption ={Executing Code on a Database}, label=dashe]
-$ cymetric test.sqlite -e "PYTHON CODE HERE"
+$ cymetric test.sqlite -e "<PYTHON CODE HERE>"
 \end{lstlisting}
 
-When a metric or root table is used by Cymetric, it returns the table as a pandas data frame \TODO{cite}. If the table Resources was of interest, then one enters \code{print(Resources[:])} inside the quotation marks. This outputs the table, a portion of which is shown below in Table \ref{tab:resources}. The full metric is returned if given \code{[:]}, \code{[None]}, or \code{[...]}. Otherwise, the metrics can be filtered.
+When a metric or root table is used by Cymetric, it returns the table 
+as a pandas data frame \TODO{cite}. If the table Resources was of interest, 
+then one enters \code{print(Resources[:])} inside the quotation marks. 
+This outputs the table, a portion of which is shown below in Table 
+\ref{tab:resources}. The full metric is returned if given \code{[:]}, 
+\code{[None]}, or \code{[...]}. 
 
 \begin{table*}[htb]
   \centering
@@ -146,10 +196,15 @@ When a metric or root table is used by Cymetric, it returns the table as a panda
   \label{tab:resources}
 \end{table*}
 
-Condition filters on column names can be applied and separated by commas if there is more than one. For example, if the plutonium isotopes are of interest for an analysis, they can be isolated as shown in Listing \ref{pu}. 
+Additioally, the metrics can be filtered direcly from this interface.
+Condition filters on column names can be applied. Multiple condition
+filters may be separated by commas. For example, if only the plutonium 
+isotopes are desired, they can be isolated as shown in Listing \ref{pu}. 
 
 \begin{lstlisting}[caption ={Filtering a Root Table in a Database}, label=pu]
- $ cymetric test.sqlite -e "print(Compositions[NucId >= 940000000, NucId < 950000000])"
+$ cymetric test.sqlite \
+  -e "print(Compositions[NucId >= 940000000, 
+                         NucId < 950000000])"
       SimId     QualId      NucId  MassFrac
 0  62079c87...       5  942380000  0.000269
 1  62079c87...       5  942390000  0.005667
@@ -160,10 +215,18 @@ Condition filters on column names can be applied and separated by commas if ther
 [5 rows x 4 columns]
 \end{lstlisting}
 
-In addition to filters on root tables, metrics can  be calculated directly on the command line. A predefined metric, \code{Materials}, can be called to calculate the mass of each nuclide for each transaction made during the simulation. Additionally, if the masses are in $g$ yet $kg$ is needed, a conversion factor can be applied, as shown in Listing \ref{mass}.
+In addition to filters on root tables, metrics can  be calculated directly 
+on the command line. A predefined metric, \code{Materials}, can be called 
+to calculate the mass of each nuclide for each transaction made during 
+the simulation. Furthermore, all operations that are possible in Python 
+with pandas DataFrames are also possible on metrics.  This enables the user
+to perform run time data manipulation without the need to create a metric.
+For example, if the masses are in [g] yet [kg] is needed, 
+a conversion factor can be applied as shown in Listing \ref{mass}.
 
 \begin{lstlisting}[caption ={Calculating and Manipulating Metrics}, label=mass]
-$ cymetric test.sqlite -e "mass = Materials[:]['Mass'] / 1000; print(mass)"
+$ cymetric test.sqlite \
+  -e "mass = Materials[:]['Mass'] / 1000; print(mass)"
 0      0.711000
 1     99.289000
 2      0.710954
@@ -183,7 +246,9 @@ $ cymetric test.sqlite -e "mass = Materials[:]['Mass'] / 1000; print(mass)"
 Name: Mass, Length: 209, dtype: float64
 \end{lstlisting}
 
-To assist more than just printing tables, there are a number of Python modules available when using the execution  flag. These are listed below in Table \ref{tab:modules} with their aliases.
+To assist more than just printing tables, there are a number of Python 
+modules available when using the execution flag. These are listed below 
+in Table \ref{tab:modules} with their aliases.
 
 \begin{table}[htb]
   \centering
@@ -206,25 +271,39 @@ To assist more than just printing tables, there are a number of Python modules a
 \TODO{Talk about getting a pretty graph using matplotlib}
 
 \subsection{Cymetric via Python}
-To obtain some degree of automation, Cymetric is accessible via Python as well. It is recommended that the aliases in \ref{tab:modules} be used. The same functionality as described above is available using the functions described below in Table \ref{tab:pyfunc}.
+Cymetric provides a full Python interface in addition to the command line 
+interface seen above. This grants programatic capabilities to metric 
+calculation and derivation. In fact, the command line interface is a thin
+wrapper around the functionality provide in the Python interface.
+For consistency, it is recommended that users adopt the same the module name 
+aliases seen in Table \ref{tab:modules}. 
+Table \ref{tab:pyfunc} describes the fucntionality provided by key 
+portions of the Python interface.
 
 \begin{table}[htb]
-  \centering
+\centering
+\caption{Cymetric capabilities provided as Python functions.}
 \begin{tabular}{ll}
 \toprule
   Function           & Syntax                 \\
 \midrule 
   \code{dbopen()}    & \code{dbopen(`db')}         \\
   \code{eval()}      & \code{eval(`Metric', db)}   \\
-  \code{exec\_code()} & \code{exec\_code(``PYTHON CODE'', db)}  \\ 
+  \code{exec\_code()} & \code{exec\_code(``<PYTHON CODE>'', db)}  \\ 
   \code{root\_metric()} & \code{root\_metric(name=`CustomTable')}  \\
 \bottomrule
 \end{tabular}
-  \caption{Cymetric capabilities provided as Python functions.}
-  \label{tab:pyfunc}
+\label{tab:pyfunc}
 \end{table} 
 
-An example of an implementation of the above functions is shown below in Listing \ref{funcs}. The database is opened via \code{dbopen()}. The function \code{eval()} evaluates and/or reads a metric or root table from the database. It allows for filtering conditions in 3-string tuples; more filters can be added by separating the tuples with commas. Lastly, \code{exec\_code()} provides the same functionality as \code{cymetric} on the command line. \TODO{I'm not perfectly clear on the advantage here}
+An example of an implementation of the above functions is shown below in 
+Listing \ref{funcs}. The database is opened via \code{dbopen()}. The 
+function \code{eval()} evaluates and reads a metric or root table from the 
+database. It allows for filtering conditions to be provided by a list of 
+3-tuples of strings. 
+Lastly, \code{exec\_code()} provides the same functionality as the
+\code{cymetric} command line utility. 
+\TODO{I'm not perfectly clear on the advantage here}
 
 \begin{lstlisting}[caption ={Example Python Script Using Cymetric}, label=funcs]
 import cymetric as cym
@@ -233,35 +312,62 @@ db = cym.dbopen('test.sqlite')
 
 # print 
 evaler = cym.Evaluator(db)
-frame = evaler.eval('Materials', db, conds=[('NucId', '==', '922350000')])
+frame = evaler.eval('Materials', db, 
+                    conds=[('NucId', '==', 922350000)])
 print(frame)
 
 # accomplishes the same output as above
-cym.exec_code("print(Materials[NucId == 922350000])", db)
+cym.exec_code("print(Materials[NucId == 922350000])", 
+              db)
 \end{lstlisting}
 
-In Listing \ref{funcs}, an \code{Evaluator} object was created because \code{eval()} creates a new object every time it is called. In the spirit of efficiency, creating an object in this way and calling its method directly prevents the database from being read each time \code{eval()} is invoked. 
+In Listing \ref{funcs}, an \code{Evaluator} object was created. 
+Creating an object in this way and calling its \code{eval()} method directly 
+is the most efficient way to evaluate metrics. This is because
+it prevents excessively reading from the database.
 
 Lastly, \cyclus allows for the creation of custom tables, so these are not accessible in Cymetric as the default root tables are. Therefore, a custom table can be accessed by the \code{root\_metric()} function. \TODO{Should I also show a code example here?}
 
 \subsection{Writing Metrics in Cymetric}
-The richness of Cymetric will be largely from user contributions to metrics. For example, radiotoxicity from \gls{SNF} can be calculated in many different ways. Sieverts per generated electricity or Sieverts per metric ton of uranium or \gls{SNF} are typically used to quantify this value. Additionally, the doses are determined differently; ingestion dose rates or total effective equivalent doses may be used. Since the developers cannot cover all scenarios, user-driven extensibility was built into Cymetric. 
+The richness of Cymetric will be largely from its suite of metrics. 
+That this suite is extensible by any user at any time will be a major 
+factor in its success. For example, radiotoxicity from \gls{SNF} can 
+be calculated in many different ways. Sieverts per generated electricity 
+or Sieverts per metric ton of uranium or \gls{SNF} are typically used to 
+quantify this value. Additionally, the doses are determined differently as 
+ingestion dose rates or total effective equivalent doses may be used. 
+Since the Cymetric authors developers cannot predict all relevant scenarios, 
+user-driven extensibility was built into Cymetric from the ground up. 
 
-A metric must be written with a function that accepts a pandas series and returns a pandas data frame. It also has the \code{$@$metric()} decorator, which takes three arguments: the name of the metric, its dependencies, and the metric's structure, or schema. The name is given as a string. The dependencies are a list of 3-entry tuples. Each one includes the name of the table, a tuple column names that are to index the series, and the column that is the value of the series. The schema provides the structure of the metric table and is a list of 2-entry tuples: the column name followed by its \cyclus datatype. A simple example is depicted below in Listing \ref{massmetric}. This metric is only dependent on the column Mass from the Materials metric. 
+Currently, a metric must be written with a function that accepts a pandas 
+series and returns a pandas data frame. Metrics are defined via 
+\code{$@$metric()} decorator, which takes three arguments: the name of the 
+metric, its dependencies, and the schema of the metric. 
+The name is given as a string. The dependencies are a list of 3-entry tuples. 
+Each one includes the name of the table, a tuple column names that are to 
+index the series, and the column that is the value of the series. 
+The metric schema provides the structure of the metric table and is a 
+list of 2-entry tuples: the column name followed by its \cyclus datatype. 
+A simple example is depicted below in Listing \ref{massmetric}. This metric 
+is only dependent on the column \code{Mass} from the \code{Materials} metric. 
 
 \begin{lstlisting}[caption ={Writing a Metric in Cymetric}, label=massmetric]
-    deps = [('Materials', ('SimId', 'ResourceId', 'NucId'), 'Mass')]
+deps = [('Materials', ('SimId', 'ResourceId', 'NucId'), 
+         'Mass')]
 
-    schema = [('SimId', cym.UUID), ('ResourceId', cym.INT),
-              ('NucId', cym.INT),  ('MassSquared', cym.DOUBLE)]
+schema = [('SimId', cym.UUID), 
+          ('ResourceId', cym.INT),
+          ('NucId', cym.INT),  
+          ('MassSquared', cym.DOUBLE)]
 
-    @cym.metric(name='MaterialsSquared', depends=deps, schema=schema)
-    def mats_sqrd(series):
-        mats = series[0]
-        rtn = mats**2
-        rtn.name = 'MaterialsSquared'
-        rtn = rtn.reset_index()
-        return rtn
+@cym.metric(name='MaterialsSquared', depends=deps, 
+            schema=schema)
+def mats_sqrd(series):
+    mats = series[0]
+    rtn = mats**2
+    rtn.name = 'MaterialsSquared'
+    rtn = rtn.reset_index()
+    return rtn
 \end{lstlisting}
 
 
@@ -272,6 +378,8 @@ I'll write a conclusion soon.
 
 \section{Acknowledgments}
 This work has been funded by the \gls{DOE} Nuclear Energy University Program and the \gls{DHS} Nuclear Forensics Graduate Research Fellowship Program. 
+
+\cite{Lar2008}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{ans}
