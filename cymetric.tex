@@ -1,7 +1,10 @@
 \documentclass{anstrans}
+\usepackage[acronym, toc]{glossaries}
+\include{acros}
+\makeglossaries
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \title{Cymetric: Fuel Cycle Metrics using \cyclus}
-\author{Anthony Scopatz, Arrielle Opotowsky, Paul P.H. Wilson$^{*}$}
+\author{Anthony Scopatz, Arrielle Opotowsky, Paul P. H. Wilson$^{*}$}
 
 \institute{
 $^{*}$Department of Engineering Physics, University of Wisconsin - Madison, 
@@ -10,135 +13,267 @@ $^{*}$Department of Engineering Physics, University of Wisconsin - Madison,
 
 \email{scopatz@gmail.edu \and opotowsky@wisc.edu}
 
-%%%% packages and definitions (optional)
+%%%% packages and definitions
 \usepackage{graphicx} % allows inclusion of graphics
 \usepackage{booktabs} % nice rules (thick lines) for tables
 \usepackage{microtype} % improves typography for PDF
 \usepackage{xspace}
+\usepackage{float}
+\usepackage{ulem}
 
 \newcommand{\SN}{S$_N$}
-\renewcommand{\vec}[1]{\bm{#1}} %vector is bold italic
-\newcommand{\vd}{\bm{\cdot}} % slightly bold vector dot
-\newcommand{\grad}{\vec{\nabla}} % gradient
-\newcommand{\ud}{\mathop{}\!\mathrm{d}} % upright derivative symbol
 \newcommand{\cyclus}{\textsc{Cyclus}\xspace}
+\newcommand{\TODO}[1] {{\color{red}\textbf{TODO: #1}}}
 
+%%%% code block stuff
+\usepackage{listings}
+\usepackage{textcomp}
+\usepackage{color}
+
+\definecolor{code}{rgb}{0,0.25,0.25}
+\lstset{
+    language={Python},
+    tabsize=4,
+    rulecolor=\color{black},
+    upquote=true,
+    aboveskip={1.5\baselineskip},
+    belowskip={1.5\baselineskip},
+    columns=fixed,
+    extendedchars=true,
+    breaklines=true,
+    prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+    frame=single,
+    showtabs=false,
+    showspaces=false,
+    showstringspaces=false,
+    basicstyle=\scriptsize\ttfamily\color{code},
+    keywordstyle=\color[rgb]{0,0,1.0},
+    commentstyle=\color[rgb]{0.133,0.545,0.133},
+    stringstyle=\color[rgb]{0.627,0.126,0.941},
+    numberstyle=\color[rgb]{0,1,0},
+    identifierstyle=\color{code},
+    captionpos=t,
+}
+\newcommand{\code}[1]{{\color{code}\texttt{#1}}}
+    
 \begin{document}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
+Nuclear fuel cycle performance is being given more attention as energy experts are attempting to identify a path forward for \gls{US} nuclear power. Thus, fuel cycle simulators are of interest; they can provide rapid feedback on an array of nuclear fuel cycles. This is generally done by computing metrics from the simulation results. Metrics of interest to the \gls{US} \gls{DOE}, for example, include levelized cost of electricity, proliferation resistance, and various quantities and qualities of the \gls{SNF}.
 
+The \cyclus nuclear fuel cycle simulator is a unique approach to the suite of existing codes. It includes many benefits and capabilities, including a modular architecture for flexible simulations and extensive comparisons, as well as an agent-based modeling approach to improve upon traditional system dynamics. \TODO{hrm, not sure what to cite, and not sure if I should add more than a blurb like this}
+
+Because a simulation is typically evaluated and compared via metrics, an analysis tool was written for \cyclus : Cymetric. When a \cyclus simulation is complete, it outputs a database. Cymetric reads in data from this \cyclus -generated database, then computes and writes the calculated metrics back to the database to allow for retrieval. The metrics can be dependent on a column in a table in a \cyclus database or on another metric.
+
+Cymetric was designed with usability and extensibility in mind; it has a Python interface and enables user customizations and input. Cymetric's simple implementation  features a command line utility, \code{cymetric}, as well as Python functionality. It is also designed so that a user can easily add their own metrics of interest if they are not already included in the tool. 
+
+\TODO{more in intro}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Methods and Implementation}
+\section{Design}
+\TODO{ read in from db, write to db, define root tables}
+
+Cymetric is designed to allow for metrics to be dependent on other metrics. For example, one might be interested in the decay heat of a batch of \gls{SNF}. The decay heat is calculated using the activity of individual nuclides. The activity is calculated from the mass of each nuclide, which is calculated from two root tables in the \cyclus database: quantity of material (mass) and the mass fraction of each nuclide in that material set. If the activity was previously calculated for another purpose, it is stored in the database and the additional step of determining the decay heat will be less expensive. 
+
+\TODO{I could make a figure to describe this if you think I should}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Results and Analysis}
-The results were interesting, so interesting in fact that we have decided to
-present them here.
+\section{Implementation}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Subsection Goes Here}
-The user must manually capitalize initial letters of a subsection heading.
+\subsection{Cymetric via the Command Line}
+The simplest way to become familiarized with the functionality of Cymetric is through the command line utility, accessed via \code{cymetric}. 
 
-For those who like equations in their papers, \LaTeX\ is a good choice. Here is
-an equation for the Marshak diffusion boundary condition:
-\begin{equation} \label{eq:marshak}
-  4 J^- = \phi + 2 D \vec{n} \vd \grad \phi \,.
-\end{equation}
-If we so choose, we can effortlessly reference the equation later.
+The first argument given is the database of interest. Currently, \cyclus supports \gls{HDF5} and \gls{SQLite} databases, so Cymetric supports both as well. For the purposes of this paper, \code{test.sqlite} will be used as the cyclus output. The second argument given is a flag: either \code{-l} to obtain a listing of the tables in the database or \code{-e} to execute arbitrary code on a root table or a metric. 
 
-Another paragraph starts with Eq.~\eqref{eq:marshak} and sets $J^-$ to zero, a
-vacuum boundary condition:
-\begin{equation*}
-  0 = \phi + \frac{2}{3} \frac{1}{\sigma} \vec{n} \vd \grad \phi \,.
-\end{equation*}
-The extrapolation distance is $2/3$. A more detailed asymptotic analysis yields
-an extrapolation distance of about $0.71045$.
+A table listing using \code{-l} will print the \cyclus interface tables as well as the metadata \cyclus stores, as shown in Listing \ref{dashl}. After a metric is computed, it shows up on the table listing as well. 
+\begin{lstlisting}[caption ={List of Tables in a Database}, label=dashl]
+$ cymetric test.sqlite -l
+AgentEntry
+AgentStateAgent
+AgentStateInventories
+AgentState_agents_NullInstInfo
+AgentState_agents_NullRegionInfo
+AgentState_cycamore_BatchReactorCommodPrefs
+AgentState_cycamore_BatchReactorCommodityRecipeContext_inoutmap
+AgentState_cycamore_BatchReactorCommodityRecipeContext_resmap
+AgentState_cycamore_BatchReactorInfo
+AgentState_cycamore_BatchReactorInitialInv
+AgentState_cycamore_BatchReactorRecipeChanges
+AgentState_cycamore_EnrichmentFacilityInfo
+Compositions
+DecayMode
+Enrichments
+FieldTypes
+Finish
+Info
+InputFiles
+MapIntDouble
+MapIntInt
+MapIntStr
+MapStrDouble
+MapStrInt
+MapStrStr
+MaterialInfo
+NextIds
+Prototypes
+Recipes
+ResCreators
+Resources
+Snapshots
+Transactions
+VectorDbl
+VectorInt
+VectorStr
+XMLPPInfo
+\end{lstlisting}
 
-Figure~\ref{fig:voltage} shows how a plot might conceivably look in your
-document. Always place figures after they are referenced so as not to throw
-off the reader. You can use symbols and different line styles to help
-differentiate your results, especially if they are printed in black and white.
-Note how Fig.~\ref{fig:voltage} uses dashed lines \verb|--| for the exact
-solution, solid lines \verb|-| for the new method's solutions, and dotted lines
-\verb|:| for existing inaccurate methods.
-\begin{figure}[ht] % replace 't' with 'b' to force it to be on the bottom
-  \centering
-  \includegraphics{example_figure.pdf}
-  \caption{Captions are flush with the left.}
-  \label{fig:voltage}
-\end{figure}
+The code execution using \code{-e} is accomplished by including Python code in quotes after the flag, as shown in Listing \ref{dashe}. 
+\begin{lstlisting}[caption ={Executing Code on a Database}, label=dashe]
+$ cymetric test.sqlite -e "PYTHON CODE HERE"
+\end{lstlisting}
 
-Later on, we can include a table, even one that spans two columns such as
-Table~\ref{tab:widetable}.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+When a metric or root table is used by Cymetric, it returns the table as a pandas data frame \TODO{cite}. If the table Resources was of interest, then one enters \code{print(Resources[:])} inside the quotation marks. This outputs the table, a portion of which is shown below in Table \ref{tab:resources}. The full metric is returned if given \code{[:]}, \code{[None]}, or \code{[...]}. Otherwise, the metrics can be filtered.
+
 \begin{table*}[htb]
   \centering
-\begin{tabular}{llllllllll}\toprule
-      & $\phi_T(0)$      & $\phi_T(10)$      & $\phi_T(20)$      &
-      $\phi_D(0)$      & $\phi_D(10)$      & $\phi_D(20)$      & $\rho$      &
-      $\varepsilon$      & $N_\text{it}$
-\\ \midrule
-$c=0.999$  & 0.9038 & 20.63 & 31.24 & 0.9087 & 20.63 & 31.23 & 0.2192 & $10^{-7}$ & 15
+\begin{tabular}{llllllllll}
+      &       & SimId      & ResourceId      &
+      ObjId      & Type      & TimeCreated      & Quantity      &
+      Parent1      & Parent2
 \\
-$c=0.990$  & 0.3675 & 13.04 & 24.7 & 0.3696 & 13.04 & 24.69 & 0.2184 & $10^{-7}$ & 15
-\\
-$c=0.900$  & 0.009909 & 4.776 & 17.64 & 0.009984 & 4.786 & 17.63 & 0.2118 & $10^{-7}$ & 14
-\\
-$c=0.500$  & $6.069\times 10^{-5}$ & 2.212 & 15.53 & 6.213$\times 10^{-5}$ & 2.239 & 15.53 & 0.2068 & $10^{-7}$ & 13
-\\
+\end{tabular}
+  \caption{The Resources table in the \cyclus database.}
+  \label{tab:resources}
+\end{table*}
+
+Condition filters on column names can be applied and separated by commas if there is more than one. For example, if the plutonium isotopes are of interest for an analysis, they can be isolated as shown in Listing \ref{pu}. 
+
+\begin{lstlisting}[caption ={Filtering a Root Table in a Database}, label=pu]
+ $ cymetric test.sqlite -e "print(Compositions[NucId >= 940000000, NucId < 950000000])"
+      SimId     QualId      NucId  MassFrac
+0  62079c87...       5  942380000  0.000269
+1  62079c87...       5  942390000  0.005667
+2  62079c87...       5  942400000  0.002204
+3  62079c87...       5  942410000  0.001944
+4  62079c87...       5  942420000  0.000820
+
+[5 rows x 4 columns]
+\end{lstlisting}
+
+In addition to filters on root tables, metrics can  be calculated directly on the command line. A predefined metric, \code{Materials}, can be called to calculate the mass of each nuclide for each transaction made during the simulation. Additionally, if the masses are in $g$ yet $kg$ is needed, a conversion factor can be applied, as shown in Listing \ref{mass}.
+
+\begin{lstlisting}[caption ={Calculating and Manipulating Metrics}, label=mass]
+$ cymetric test.sqlite -e "mass = Materials[:]['Mass'] / 1000; print(mass)"
+0      0.711000
+1     99.289000
+2      0.710954
+3     99.282530
+4      0.000046
+5      0.006470
+6      0.710907
+7     99.276059
+8      0.000046
+9      0.006470
+10     0.710827
+11    99.264806
+12     0.000081
+13     0.011254
+14     0.710790
+...
+Name: Mass, Length: 209, dtype: float64
+\end{lstlisting}
+
+To assist more than just printing tables, there are a number of Python modules available when using the execution  flag. These are listed below in Table \ref{tab:modules} with their aliases.
+
+\begin{table}[htb]
+  \centering
+\begin{tabular}{ll}
+\toprule
+  Module                   & Alias \\
+\midrule
+  \code{cymetric}          & \code {cym} \\
+  \code{numpy}             & \code{np} \\  
+  \code{pandas}            & \code{pd} \\
+  \code{uuid}              & \code{uuid} \\
+  \code{matplotlib}        & \code{matplotlib} \\
+  \code{matplotlib.pyplot} & \code{plt} \\
 \bottomrule
 \end{tabular}
-  \caption{This is an example of a really wide table which might not normally
-  fit in the document.}
-  \label{tab:widetable}
-\end{table*}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Notice how the table reference uses a Roman numeral
-for its numbering scheme, whereas the figure reference uses an Arabic numeral.
-For one-column tables, use the \verb|table| environment; two-column tables use
-\verb|table*|. The same applies to figures.
+  \caption{Modules available via Cymetric command line code execution.}
+  \label{tab:modules}
+\end{table}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Another Subsection}
-Excessive sectioning in a three-page document is discouraged, but here are more
-subsections to demonstrate compliance with the ANS formatting guidelines.
+\TODO{Talk about getting a pretty graph using matplotlib}
 
-\subsubsection{Third-level Heading}
-This subsubsection shows compliance with the ANS-specified standard. This level
-of heading should be used rarely.
+\subsection{Cymetric via Python}
+To obtain some degree of automation, Cymetric is accessible via Python as well. It is recommended that the aliases in \ref{tab:modules} be used. The same functionality as described above is available using the functions described below in Table \ref{tab:pyfunc}.
 
-\subsubsection{Another Such Heading}
-And, if you really think you need a third-level heading, you should make sure
-that your subsection needs at least two of them.
+\begin{table}[htb]
+  \centering
+\begin{tabular}{ll}
+\toprule
+  Function           & Syntax                 \\
+\midrule 
+  \code{dbopen()}    & \code{dbopen(`db')}         \\
+  \code{eval()}      & \code{eval(`Metric', db)}   \\
+  \code{exec\_code()} & \code{exec\_code(``PYTHON CODE'', db)}  \\ 
+  \code{root\_metric()} & \code{root\_metric(name=`CustomTable')}  \\
+\bottomrule
+\end{tabular}
+  \caption{Cymetric capabilities provided as Python functions.}
+  \label{tab:pyfunc}
+\end{table} 
+
+An example of an implementation of the above functions is shown below in Listing \ref{funcs}. The database is opened via \code{dbopen()}. The function \code{eval()} evaluates and/or reads a metric or root table from the database. It allows for filtering conditions in 3-string tuples; more filters can be added by separating the tuples with commas. Lastly, \code{exec\_code()} provides the same functionality as \code{cymetric} on the command line. \TODO{I'm not perfectly clear on the advantage here}
+
+\begin{lstlisting}[caption ={Example Python Script Using Cymetric}, label=funcs]
+import cymetric as cym
+
+db = cym.dbopen('test.sqlite')
+
+# print 
+evaler = cym.Evaluator(db)
+frame = evaler.eval('Materials', db, conds=[('NucId', '==', '922350000')])
+print(frame)
+
+# accomplishes the same output as above
+cym.exec_code("print(Materials[NucId == 922350000])", db)
+\end{lstlisting}
+
+In Listing \ref{funcs}, an \code{Evaluator} object was created because \code{eval()} creates a new object every time it is called. In the spirit of efficiency, creating an object in this way and calling its method directly prevents the database from being read each time \code{eval()} is invoked. 
+
+Lastly, \cyclus allows for the creation of custom tables, so these are not accessible in Cymetric as the default root tables are. Therefore, a custom table can be accessed by the \code{root\_metric()} function. \TODO{Should I also show a code example here?}
+
+\subsection{Writing Metrics in Cymetric}
+The richness of Cymetric will be largely from user contributions to metrics. For example, radiotoxicity from \gls{SNF} can be calculated in many different ways. Sieverts per generated electricity or Sieverts per metric ton of uranium or \gls{SNF} are typically used to quantify this value. Additionally, the doses are determined differently; ingestion dose rates or total effective equivalent doses may be used. Since the developers cannot cover all scenarios, user-driven extensibility was built into Cymetric. 
+
+A metric must be written with a function that accepts a pandas series and returns a pandas data frame. It also has the \code{$@$metric()} decorator, which takes three arguments: the name of the metric, its dependencies, and the metric's structure, or schema. The name is given as a string. The dependencies are a list of 3-entry tuples. Each one includes the name of the table, a tuple column names that are to index the series, and the column that is the value of the series. The schema provides the structure of the metric table and is a list of 2-entry tuples: the column name followed by its \cyclus datatype. A simple example is depicted below in Listing \ref{massmetric}. This metric is only dependent on the column Mass from the Materials metric. 
+
+\begin{lstlisting}[caption ={Writing a Metric in Cymetric}, label=massmetric]
+    deps = [('Materials', ('SimId', 'ResourceId', 'NucId'), 'Mass')]
+
+    schema = [('SimId', cym.UUID), ('ResourceId', cym.INT),
+              ('NucId', cym.INT),  ('MassSquared', cym.DOUBLE)]
+
+    @cym.metric(name='MaterialsSquared', depends=deps, schema=schema)
+    def mats_sqrd(series):
+        mats = series[0]
+        rtn = mats**2
+        rtn.name = 'MaterialsSquared'
+        rtn = rtn.reset_index()
+        return rtn
+\end{lstlisting}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions}
 
-The included ANS style file and this clear example file are a panacea for
-the hours of headache that invariably results from formatting a document in
-Microsoft Word.
+I'll write a conclusion soon. 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\appendix
-\section{Appendix}
-
-Numbering in the appendix is different:
-\begin{equation} \label{eq:appendix}
-  2 + 2 = 5\,.
-\end{equation}
-and another equation:
-\begin{equation} \label{eq:appendix2}
-  a + b = c\,.
-\end{equation}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Acknowledgments}
-This material is based upon work supported a Department of Energy Nuclear
-Energy University Programs Graduate Fellowship.
+This work has been funded by the \gls{DOE} Nuclear Energy University Program and the \gls{DHS} Nuclear Forensics Graduate Research Fellowship Program. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{ans}
 \bibliography{cymetric}
 \end{document}
-
