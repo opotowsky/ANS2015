@@ -3,7 +3,7 @@
 \include{acros}
 \makeglossaries
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{Cymetric: Fuel Cycle Metrics using \cyclus}
+\title{Cymetric - A Fuel Cycle Metrics Tool for \cyclus}
 \author{Anthony Scopatz, Arrielle Opotowsky, Paul P. H. Wilson$^{*}$}
 
 \institute{
@@ -11,7 +11,7 @@ $^{*}$Department of Engineering Physics, University of Wisconsin - Madison,
 1500 Engineering Drive, Madison WI 53703
 }
 
-\email{scopatz@gmail.edu \and opotowsky@wisc.edu}
+\email{scopatz@wisc.edu \and opotowsky@wisc.edu}
 
 %%%% packages and definitions
 \usepackage{graphicx} % allows inclusion of graphics
@@ -59,13 +59,37 @@ $^{*}$Department of Engineering Physics, University of Wisconsin - Madison,
 \begin{document}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-Nuclear fuel cycle performance is being given more attention as energy experts are attempting to identify a path forward for \gls{US} nuclear power. Thus, fuel cycle simulators are of interest; they can provide rapid feedback on an array of nuclear fuel cycles. This is generally done by computing metrics from the simulation results. Metrics of interest to the \gls{US} \gls{DOE}, for example, include levelized cost of electricity, proliferation resistance, and various quantities and qualities of the \gls{SNF}.
+Nuclear fuel cycle performance is being given more attention as energy 
+experts are attempting to identify a path forward for \gls{US} nuclear power. 
+Fuel cycle simulators are of thus of interest because they can provide rapid 
+feedback on an array of nuclear fuel cycles. This is generally done by 
+computing higher-level aggregate metrics derived from the simulation results. 
+Metrics of potential interest to the simulator stakeholders, for example, 
+include levelized cost of electricity, proliferation resistance, and various 
+quantities and qualities of the \gls{SNF}.
 
-The \cyclus nuclear fuel cycle simulator is a unique approach to the suite of existing codes. It includes many benefits and capabilities, including a modular architecture for flexible simulations and extensive comparisons, as well as an agent-based modeling approach to improve upon traditional system dynamics. \TODO{hrm, not sure what to cite, and not sure if I should add more than a blurb like this}
+The \cyclus nuclear fuel cycle simulator is a unique approach to the suite of 
+existing simulation codes. It includes many benefits and capabilities, 
+including a modular architecture for flexible simulations and extensive 
+comparisons, as well as an agent-based modeling approach to improve upon 
+traditional system dynamics. 
+\TODO{hrm, not sure what to cite, and not sure if I should add more than a blurb like this}
 
-Because a simulation is typically evaluated and compared via metrics, an analysis tool was written for \cyclus : Cymetric. When a \cyclus simulation is complete, it outputs a database. Cymetric reads in data from this \cyclus -generated database, then computes and writes the calculated metrics back to the database to allow for retrieval. The metrics can be dependent on a column in a table in a \cyclus database or on another metric.
+Simulations are typically evaluated and compared via metrics. This 
+prompted the creation of a
+a new analysis tool, called Cymetric, written for \cyclus. When a \cyclus 
+simulation is complete, it stores its information in a database. Cymetric 
+reads in data from this \cyclus{}-generated database, computes, and writes 
+the calculated metrics back to the database to allow for future retrieval. 
+The metrics can be dependent on other metrics in the \cyclus database.
+This allows sets of related metrics to be computed efficiently.
 
-Cymetric was designed with usability and extensibility in mind; it has a Python interface and enables user customizations and input. Cymetric's simple implementation  features a command line utility, \code{cymetric}, as well as Python functionality. It is also designed so that a user can easily add their own metrics of interest if they are not already included in the tool. 
+Cymetric was designed with usability and extensibility in mind. 
+It has a Python interface and enables user customizations and input. 
+Cymetric currently features a command line utility, \code{cymetric}, 
+as well as a Python interface. Furthermore, it is designed so that a user can 
+easily add their own custom metrics of interest if they are not already 
+included in the tool. 
 
 \TODO{more in intro}
 
@@ -73,7 +97,16 @@ Cymetric was designed with usability and extensibility in mind; it has a Python 
 \section{Design}
 \TODO{ read in from db, write to db, define root tables}
 
-Cymetric is designed to allow for metrics to be dependent on other metrics. For example, one might be interested in the decay heat of a batch of \gls{SNF}. The decay heat is calculated using the activity of individual nuclides. The activity is calculated from the mass of each nuclide, which is calculated from two root tables in the \cyclus database: quantity of material (mass) and the mass fraction of each nuclide in that material set. If the activity was previously calculated for another purpose, it is stored in the database and the additional step of determining the decay heat will be less expensive. 
+Cymetric is designed to allow for metrics to be dependent on other 
+metrics. These metric dependencies must form a directed acyclic graph (DAG).
+For example, one might be interested in the decay heat of a batch of 
+\gls{SNF}. The decay heat is calculated using the activity of individual 
+nuclides. The activity is calculated from the mass of each nuclide, which 
+is calculated from two root metics generated by  \cyclus itself: quantity of 
+material (mass) and the mass fraction of each nuclide in that material. 
+In this example, if the activity was previously calculated for another 
+purpose, it is stored in the database and the additional step of 
+determining the decay heat will be less expensive. 
 
 \TODO{I could make a figure to describe this if you think I should}
 
@@ -81,11 +114,22 @@ Cymetric is designed to allow for metrics to be dependent on other metrics. For 
 \section{Implementation}
 
 \subsection{Cymetric via the Command Line}
-The simplest way to become familiarized with the functionality of Cymetric is through the command line utility, accessed via \code{cymetric}. 
+The simplest way to become familiarized with the functionality of Cymetric 
+is through the command line utility \code{cymetric}. 
 
-The first argument given is the database of interest. Currently, \cyclus supports \gls{HDF5} and \gls{SQLite} databases, so Cymetric supports both as well. For the purposes of this paper, \code{test.sqlite} will be used as the cyclus output. The second argument given is a flag: either \code{-l} to obtain a listing of the tables in the database or \code{-e} to execute arbitrary code on a root table or a metric. 
+The first argument given to this tool is the database of interest. 
+Currently, \cyclus supports \gls{HDF5} and \gls{SQLite} databases, 
+so Cymetric supports both as well. For the purposes of this paper, 
+\code{test.sqlite} will be used as the cyclus output file. The second 
+argument given is an optional flag. Either \code{-l} may be provided to obtain 
+a listing of the tables currently in the database or the \code{-e} flag 
+can be given to execute arbitrary code on a metric. 
 
-A table listing using \code{-l} will print the \cyclus interface tables as well as the metadata \cyclus stores, as shown in Listing \ref{dashl}. After a metric is computed, it shows up on the table listing as well. 
+A table listing using \code{-l} will print the \cyclus generated tables 
+as well as the metadata \cyclus stores. This can be seen in Listing 
+\ref{dashl}. After a metric is computed, it shows up on the table 
+listing here as well. 
+
 \begin{lstlisting}[caption ={List of Tables in a Database}, label=dashl]
 $ cymetric test.sqlite -l
 AgentEntry
@@ -94,8 +138,6 @@ AgentStateInventories
 AgentState_agents_NullInstInfo
 AgentState_agents_NullRegionInfo
 AgentState_cycamore_BatchReactorCommodPrefs
-AgentState_cycamore_BatchReactorCommodityRecipeContext_inoutmap
-AgentState_cycamore_BatchReactorCommodityRecipeContext_resmap
 AgentState_cycamore_BatchReactorInfo
 AgentState_cycamore_BatchReactorInitialInv
 AgentState_cycamore_BatchReactorRecipeChanges
@@ -125,6 +167,7 @@ VectorDbl
 VectorInt
 VectorStr
 XMLPPInfo
+...
 \end{lstlisting}
 
 The code execution using \code{-e} is accomplished by including Python code in quotes after the flag, as shown in Listing \ref{dashe}. 
