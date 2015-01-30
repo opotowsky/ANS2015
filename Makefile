@@ -1,4 +1,4 @@
-manuscript = cymetric 
+manuscript = cymetric
 references = cymetric
 latexopt   = -halt-on-error -file-line-error
 
